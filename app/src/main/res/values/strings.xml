@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">JiangCore Sample</string>
+    <string name="main_title">JiangCore</string>
+    <string name="load_data">Load Data</string>
+</resources>

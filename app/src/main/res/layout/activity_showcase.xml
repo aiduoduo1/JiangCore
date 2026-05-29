@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <Button
+        android:id="@+id/btnToolbarDemo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Toolbar 示例" />
+
+    <Button
+        android:id="@+id/btnStateLayoutDemo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="StateLayout 示例" />
+
+    <Button
+        android:id="@+id/btnNetworkDemo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Network 示例" />
+
+    <Button
+        android:id="@+id/btnStorageDemo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Storage 示例" />
+</LinearLayout>
