@@ -1,35 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:layout_height="match_parent">
 
-    <Button
-        android:id="@+id/btnToolbarDemo"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Toolbar 示例" />
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp">
 
-    <Button
-        android:id="@+id/btnStateLayoutDemo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="StateLayout 示例" />
+        <Button
+            android:id="@+id/btnToolbarDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toolbar Demo" />
 
-    <Button
-        android:id="@+id/btnNetworkDemo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Network 示例" />
+        <Button
+            android:id="@+id/btnStateLayoutDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="StateLayout Demo" />
 
-    <Button
-        android:id="@+id/btnStorageDemo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Storage 示例" />
-</LinearLayout>
+        <Button
+            android:id="@+id/btnNetworkDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Network Demo" />
+
+        <Button
+            android:id="@+id/btnScanCodeDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Scan Code Demo" />
+
+        <Button
+            android:id="@+id/btnApkUpdateDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="APK Update Demo" />
+
+        <Button
+            android:id="@+id/btnStorageDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Storage Demo" />
+
+        <Button
+            android:id="@+id/btnUiDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="UI Demo" />
+
+        <Button
+            android:id="@+id/btnPermissionDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Permission Demo" />
+
+        <Button
+            android:id="@+id/btnPermissionFlowDemo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Permission Flow Demo" />
+    </LinearLayout>
+</ScrollView>

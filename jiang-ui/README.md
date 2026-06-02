@@ -1,105 +1,83 @@
-# jiang-ui/README.md
-
 # jiang-ui
 
-## 模块定位
+## Module Role
 
-`jiang-ui` 是 JiangCore 的通用 UI 模块，包名为：
+`jiang-ui` provides reusable UI helpers and page base classes that combine toolbar, state layout, dialogs, and toast.
 
-```text
-com.jj.ui
-```
-
-该模块负责封装 Android 项目中常用的通用 UI 能力，例如 Loading、Toast、Dialog、页面状态布局、空页面、错误页面、View 扩展和通用 Adapter。
-
-## 核心职责
-
-* 提供统一 Loading 能力
-* 提供统一 Toast 能力
-* 提供统一 Dialog 能力
-* 提供页面状态布局
-* 提供空页面展示
-* 提供错误页面展示
-* 提供 View 扩展函数
-* 提供防重复点击能力
-* 提供 RecyclerView 通用能力
-
-## 不负责什么
-
-* 不编写业务页面
-* 不处理网络请求
-* 不处理业务状态
-* 不直接依赖业务模块
-* 不强绑定某个具体项目的 UI 风格
-
-## 主要包结构
+Package:
 
 ```text
 com.jj.ui
-├── loading       Loading 组件
-├── toast         Toast 组件
-├── dialog        Dialog 组件
-├── state         页面状态布局
-├── adapter       通用 Adapter
-└── ext           View 扩展函数
 ```
 
-## 对外能力
+## Current Capabilities
 
-* `JiangLoading`：统一 Loading
-* `LoadingDialog`：Loading 弹窗
-* `JiangToast`：统一 Toast
-* `ConfirmDialog`：确认弹窗
-* `MessageDialog`：消息弹窗
-* `StateLayout`：页面状态布局
-* `EmptyView`：空页面
-* `ErrorView`：错误页面
-* `ViewExt`：View 扩展函数
-* `JiangAdapter`：通用列表 Adapter
+- Toolbar:
+  - `JiangToolbar`.
+  - `JiangToolbarActivity`.
+  - `JiangToolbarVmActivity`.
+  - `JiangToolbarStateVmActivity`.
+- Page state layout:
+  - `JiangStateLayout`.
+  - `JiangStateViewConfig`.
+- Dialogs:
+  - `JBaseDialog`.
+  - `JLoadingDialog`.
+  - `JConfirmDialog`.
+  - `JInputDialog`.
+  - `JScanInputDialog`.
+  - `JSingleChoiceDialog`.
+  - `JMultiChoiceDialog`.
+  - `JListDialog`.
+- Toast:
+  - `JToast`.
+- View helpers:
+  - `clickNoRepeat`.
+- Page ergonomics:
+  - `JiangErrorMode`.
+  - `observeText()`.
 
-## 使用示例
+## Current Behavior
 
-Toast 提示：
+`JiangToolbarStateVmActivity` observes `JiangViewModel.uiState` and dispatches:
 
-```kotlin
-JiangToast.show("保存成功")
-```
+- `Idle` -> content page.
+- `Loading(PAGE)` -> loading page.
+- `Loading(DIALOG)` -> loading dialog.
+- `Loading(NONE)` -> no loading UI.
+- `Success` -> content page.
+- `Error` -> page error, toast, or no UI according to `errorMode()`.
+- `Empty` -> empty page.
 
-Loading 展示：
+It also dismisses the loading dialog in `onDestroy`.
 
-```kotlin
-JiangLoading.show(context)
-JiangLoading.dismiss()
-```
+Dialogs are lifecycle-aware. `JBaseDialog`, `JLoadingDialog`, and the business dialog helpers can bind to a `LifecycleOwner`, dismiss automatically on destroy, and avoid showing when the Activity is no longer alive.
 
-页面状态切换：
+`JToast` keeps an application context, cancels the previous toast before showing a new one, and supports `showOnce()` for repeated-message suppression.
 
-```kotlin
-stateLayout.showLoading()
-stateLayout.showContent()
-stateLayout.showEmpty("暂无数据")
-stateLayout.showError("加载失败")
-```
+## Current Gap
 
-防重复点击：
+The current base Activity is now lighter for common pages. Remaining gaps:
 
-```kotlin
-button.setSingleClickListener {
-    // 执行点击事件
-}
-```
+- Add richer one-time UI event examples for scan-code pages.
+- Add optional retry action helpers if repeated retry code grows.
+- Add custom `JiangStateLayout` view replacement if project-specific empty/error pages become common.
 
-## 依赖关系
+## Boundaries
+
+`jiang-ui` should not contain:
+
+- Business UI pages.
+- Business network calls.
+- Business DTOs.
+- Project-specific visual design rules.
+
+## Dependencies
 
 ```kotlin
 implementation(project(":jiang-common"))
 implementation(project(":jiang-core"))
+implementation(project(":jiang-arch"))
+implementation(libs.androidx.appcompat)
+implementation(libs.android.material)
 ```
-
-## 设计原则
-
-`jiang-ui` 只提供通用 UI 能力，不写业务 UI。
-
-所有 UI 能力都应该低侵入、可替换、可扩展。
-
-业务项目可以直接使用默认组件，也可以替换 Loading、Toast、Dialog 的具体实现。

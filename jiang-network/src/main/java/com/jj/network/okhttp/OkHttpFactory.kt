@@ -1,6 +1,8 @@
 package com.jj.network.okhttp
 
 import com.jj.network.config.JiangNetworkConfig
+import com.jj.network.config.JiangNetworkLogLevel
+import com.jj.network.config.toOkHttpLevel
 import com.jj.network.okhttp.interceptor.HeaderInterceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -15,10 +17,13 @@ object OkHttpFactory {
             .writeTimeout(config.writeTimeoutSeconds, TimeUnit.SECONDS)
             .addInterceptor(HeaderInterceptor(config))
             .apply {
-                if (config.debug) {
+                if (config.logLevel != JiangNetworkLogLevel.NONE) {
                     addInterceptor(
                         HttpLoggingInterceptor().apply {
-                            level = HttpLoggingInterceptor.Level.BASIC
+                            config.sensitiveHeaders.forEach { headerName ->
+                                redactHeader(headerName)
+                            }
+                            level = config.logLevel.toOkHttpLevel()
                         },
                     )
                 }

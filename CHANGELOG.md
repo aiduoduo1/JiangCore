@@ -1,94 +1,115 @@
 # CHANGELOG
 
+## v0.3.0 - 2026-06-02
+
+### Added
+
+- Added file download support in `jiang-network.download`.
+- Added APK download helper in `JiangApkDownloader`.
+- Added temporary `.tmp` download flow with success rename and failure cleanup.
+- Added download progress callback model.
+- Added `JiangApiException` for download failure normalization.
+- Added APK install guidance in `jiang-core.apk`.
+- Added APK file validation, unknown app install permission check, settings jump, FileProvider URI creation, and system installer launch.
+- Added app FileProvider manifest config and `jiang_file_paths.xml`.
+- Added APK update demo page in app.
+- Added `JiangNetworkLogLevel` and configurable `JiangNetworkConfig.logLevel`.
+- Added app-owned `MesBaseResult<T>.toJiangResult()` business response conversion example.
+- Added `JiangNetworkConfig.unauthorizedHandler` for HTTP `401` notification.
+- Added internal `No-Token` header support for per-request token opt-out.
+- Added default sensitive header redaction for network logging.
+- Added `NETWORK_UNAVAILABLE` error code.
+- Added runtime permission helpers in `jiang-core.permission`.
+- Added permission scene and flow result models in `jiang-core.permission`.
+- Added vibration helper in `jiang-core.system.JiangVibrator`.
+- Added app baseline permissions for network, camera, location, bluetooth, media/photos, file storage, and vibration.
+- Added permission demo page in app.
+- Added permission business-flow demo page in app.
+
+### Changed
+
+- Download requests now read `MES-UP-TOKEN` from merged static and dynamic network headers.
+- API calls and downloads now rethrow coroutine cancellation instead of converting it to a network error.
+- `UnknownHostException` now maps to `NETWORK_UNAVAILABLE`.
+
+### Notes
+
+- No breakpoint resume, download queue, or notification download is implemented.
+- `jiang-network` does not install APKs.
+- `jiang-core` does not do silent install, root install, or MDM install.
+- Version checking and update dialogs remain app/business logic.
+
+## Unreleased - v0.2.0-dev
+
+### Added
+
+- Added `JToast`.
+- Added `JLoadingDialog`.
+- Added `JConfirmDialog`.
+- Added lifecycle-aware `JBaseDialog`.
+- Added `JInputDialog`.
+- Added `JScanInputDialog`.
+- Added `JSingleChoiceDialog`.
+- Added `JMultiChoiceDialog`.
+- Added `JListDialog`.
+- Added click debounce extension.
+- Added UI demo page.
+- Added dynamic network headers through `JiangNetworkConfig.dynamicHeadersProvider`.
+- Added login API usage demo in app with `LoginApi`, `LoginRepository`, `LoginRequest`, and `MesBaseResult`.
+
+### Changed
+
+- Exposed Retrofit core from `jiang-network` with `api(libs.retrofit.core)` so app/business modules can declare Retrofit interfaces while keeping dependency version ownership in `jiang-network`.
+- Dialogs now bind to lifecycle-aware show/dismiss behavior.
+- Fixed default UI dialog/state text.
+- `JToast` now cancels the previous toast and supports repeated-message suppression.
+- `clickNoRepeat` now uses elapsed realtime instead of wall-clock time.
+
+### Notes
+
+- Page development still has boilerplate in observers and UI state handling.
+- Loading and error presentation need mode-based cleanup in the next step.
+
+## Unreleased - v0.2.1-dev
+
+### Added
+
+- Added `JiangLoadingMode` with `NONE`, `PAGE`, and `DIALOG`.
+- Added `JiangErrorMode` with `PAGE`, `TOAST`, and `NONE`.
+- Added `JiangEvent` for one-time event delivery.
+- Added `JiangUiEvent` for common one-time UI events.
+- Added `observeText()` helper in `JiangToolbarStateVmActivity`.
+- Added dialog loading support through `JiangViewModel.launch()` and `launchResult()`.
+- Added scan-code business page demo for sequential requests, focus jump, select-all-on-error, and dialog loading.
+
+### Changed
+
+- `JiangUiState.Loading` now carries loading mode and optional message.
+- `JiangToolbarStateVmActivity` now dispatches page loading, dialog loading, and toast errors through overridable modes.
+- Simplified `NetworkDemoActivity` by removing repeated observer, success, error, and retry overrides.
+
+### Notes
+
+- Existing default behavior remains page loading and page error.
+- Scan-code specific focus/select-all events are still intended to stay in app/business page event models.
+
 ## v0.1.0 - 2026-05-29
 
-### 阶段定位
+### Added
 
-JiangCore 第一阶段基础框架版本。
+- Created Android multi-module framework structure.
+- Added modules: `app`, `jiang-common`, `jiang-core`, `jiang-arch`, `jiang-network`, `jiang-storage`, and `jiang-ui`.
+- Added `JiangCore` and `JiangConfig`.
+- Added common result, exception, error code, and log classes.
+- Added Activity, Fragment, ViewModel, and state base classes.
+- Added toolbar and state layout support.
+- Added Retrofit, OkHttp, Gson, request header interceptor, API caller, and network exception mapping.
+- Added storage initialization and key-value abstraction.
+- Added showcase sample pages for toolbar, state layout, network, and storage.
 
-该版本完成 Android 多模块 Library 框架的基础骨架、页面开发范式、网络层、存储层和 app-sample 示例验证。
+### Constraints
 
-### 已完成
-
-#### 工程结构
-
-- 完成多模块工程结构
-- 统一包名为 `com.jj.xxx`
-- 完成根目录 `CODEX.md`
-- 完成各模块 README
-- 完成依赖边界约束
-
-#### jiang-core
-
-- 提供 `JiangCore` 初始化入口
-- 提供 `JiangConfig` 配置类
-
-#### jiang-common
-
-- 提供 `JiangResult`
-- 提供 `JiangException`
-- 提供 `JiangErrorCode`
-- 提供 `JiangLog`
-
-#### jiang-arch
-
-- 提供 `JiangActivity`
-- 提供 `JiangVmActivity`
-- 提供 `JiangFragment`
-- 提供 `JiangVmFragment`
-- 提供 `JiangStateVmActivity`
-- 提供 `JiangViewModel`
-- 提供 `JiangUiState`
-- 支持 ViewBinding
-- 支持 ViewModel 自动注入
-- 支持 ViewModel 协程封装
-- 支持 UI 状态自动分发
-
-#### jiang-ui
-
-- 提供 `JiangToolbar`
-- 提供 `JiangToolbarActivity`
-- 提供 `JiangToolbarVmActivity`
-- 提供 `JiangToolbarStateVmActivity`
-- 提供 `JiangStateLayout`
-- 支持 Toolbar 标题、返回按钮、菜单
-- 支持 Loading / Empty / Error / Content 页面状态切换
-
-#### jiang-network
-
-- 提供 `JiangNetwork`
-- 提供 `JiangNetworkConfig`
-- 提供 Retrofit 创建能力
-- 提供 OkHttp 创建能力
-- 提供 Gson Converter
-- 提供 HeaderInterceptor
-- 提供 `JiangApiCaller.safeApiCall`
-- 提供网络异常统一转换
-
-#### jiang-storage
-
-- 提供 `JiangStorage`
-- 提供 `JiangStorageConfig`
-- 提供 `JiangKeyValueStore`
-- 提供 MMKV Key-Value 实现
-
-#### app-sample
-
-- 提供 Showcase 首页
-- 提供 Toolbar 示例
-- 提供 StateLayout 示例
-- 提供 Network 示例
-- 提供 Storage 示例
-- 完成框架主要能力验证
-
-### 约束
-
-- 不使用旧包名 `com.jiang.xxx`
-- 不使用 DataBinding
-- 不引入业务概念
-- `jiang-core` 不依赖 network / storage / ui / arch
-- `jiang-network` 不依赖 ui / storage / arch
-- `jiang-storage` 不依赖 network / ui / arch
-- `jiang-arch` 不依赖 network / storage / ui
-- `Retrofit / OkHttp / Gson` 只在 `jiang-network`
-- `MMKV / DataStore` 只在 `jiang-storage`
+- Package namespace is `com.jj.xxx`.
+- ViewBinding is used.
+- DataBinding is not used.
+- Gradle, AGP, Kotlin, SDK, and dependency versions are not upgraded by framework feature work.

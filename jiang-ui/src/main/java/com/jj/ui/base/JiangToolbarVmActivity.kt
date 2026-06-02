@@ -13,8 +13,12 @@ abstract class JiangToolbarVmActivity<VB : ViewBinding, VM : ViewModel> : JiangV
         private set
 
     override fun createRootView(binding: VB): View {
+        return createToolbarRootView(binding.root)
+    }
+
+    protected fun createToolbarRootView(contentView: View): View {
         if (!showToolbar()) {
-            return binding.root
+            return contentView
         }
 
         toolbar = JiangToolbar(this).apply {
@@ -35,7 +39,7 @@ abstract class JiangToolbarVmActivity<VB : ViewBinding, VM : ViewModel> : JiangV
                 ),
             )
             addView(
-                binding.root,
+                contentView,
                 LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     0,

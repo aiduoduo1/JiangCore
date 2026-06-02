@@ -4,7 +4,10 @@ sealed class JiangUiState<out T> {
 
     data object Idle : JiangUiState<Nothing>()
 
-    data object Loading : JiangUiState<Nothing>()
+    data class Loading(
+        val mode: JiangLoadingMode = JiangLoadingMode.PAGE,
+        val message: CharSequence? = null,
+    ) : JiangUiState<Nothing>()
 
     data class Success<T>(val data: T) : JiangUiState<T>()
 

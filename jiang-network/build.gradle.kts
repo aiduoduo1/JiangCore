@@ -36,7 +36,7 @@ dependencies {
     implementation(project(":jiang-common"))
     implementation(project(":jiang-core"))
 
-    implementation(libs.retrofit.core)
+    api(libs.retrofit.core)
     implementation(libs.retrofit.converter.gson)
 
     implementation(libs.okhttp.core)

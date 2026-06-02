@@ -22,8 +22,23 @@ class ShowcaseActivity : JiangToolbarStateVmActivity<ActivityShowcaseBinding, Sh
         binding.btnNetworkDemo.setOnClickListener {
             startActivity(Intent(this, NetworkDemoActivity::class.java))
         }
+        binding.btnScanCodeDemo.setOnClickListener {
+            startActivity(Intent(this, ScanCodeDemoActivity::class.java))
+        }
+        binding.btnApkUpdateDemo.setOnClickListener {
+            startActivity(Intent(this, ApkUpdateDemoActivity::class.java))
+        }
         binding.btnStorageDemo.setOnClickListener {
             startActivity(Intent(this, StorageDemoActivity::class.java))
+        }
+        binding.btnUiDemo.setOnClickListener {
+            startActivity(Intent(this, UiDemoActivity::class.java))
+        }
+        binding.btnPermissionDemo.setOnClickListener {
+            startActivity(Intent(this, PermissionDemoActivity::class.java))
+        }
+        binding.btnPermissionFlowDemo.setOnClickListener {
+            startActivity(Intent(this, PermissionFlowDemoActivity::class.java))
         }
     }
 

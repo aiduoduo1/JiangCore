@@ -7,6 +7,7 @@ import com.jj.network.JiangNetwork
 import com.jj.network.config.JiangNetworkConfig
 import com.jj.storage.JiangStorage
 import com.jj.storage.config.JiangStorageConfig
+import com.jj.ui.toast.JToast
 
 class SampleApplication : Application() {
 
@@ -23,6 +24,12 @@ class SampleApplication : Application() {
         JiangNetwork.init(
             config = JiangNetworkConfig(
                 baseUrl = "https://example.com/",
+                dynamicHeadersProvider = {
+                    mapOf(
+                        "MES-UP-TOKEN" to JiangStorage.kv.getString(KEY_MES_UP_TOKEN, "").orEmpty(),
+                        "User-Agent" to "JiangCoreSample",
+                    )
+                },
                 debug = BuildConfig.DEBUG,
             ),
         )
@@ -33,5 +40,10 @@ class SampleApplication : Application() {
                 debug = BuildConfig.DEBUG,
             ),
         )
+        JToast.init(this)
+    }
+
+    private companion object {
+        const val KEY_MES_UP_TOKEN = "mes_up_token"
     }
 }

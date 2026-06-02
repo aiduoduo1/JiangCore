@@ -4,6 +4,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.jj.arch.event.JiangEvent
+import com.jj.arch.event.JiangUiEvent
+import com.jj.arch.state.JiangLoadingMode
 import com.jj.arch.state.JiangUiState
 import com.jj.common.exception.JiangErrorCode
 import com.jj.common.exception.JiangException
@@ -16,8 +19,16 @@ open class JiangViewModel : ViewModel() {
     private val _uiState = MutableLiveData<JiangUiState<Any>>(JiangUiState.Idle)
     val uiState: LiveData<JiangUiState<Any>> = _uiState
 
-    protected fun setLoading() {
-        _uiState.value = JiangUiState.Loading
+    private val _uiEvent = MutableLiveData<JiangEvent<Any>>()
+    val uiEvent: LiveData<JiangEvent<Any>> = _uiEvent
+
+    protected fun setLoading(
+        mode: JiangLoadingMode = JiangLoadingMode.PAGE,
+        message: CharSequence? = null,
+    ) {
+        if (mode != JiangLoadingMode.NONE) {
+            _uiState.value = JiangUiState.Loading(mode, message)
+        }
     }
 
     protected fun setEmpty() {
@@ -36,14 +47,34 @@ open class JiangViewModel : ViewModel() {
         _uiState.value = JiangUiState.Success(data)
     }
 
+    protected fun sendEvent(event: Any) {
+        _uiEvent.value = JiangEvent(event)
+    }
+
+    protected fun showToast(message: CharSequence) {
+        sendEvent(JiangUiEvent.Toast(message))
+    }
+
+    protected fun showLoadingDialog(message: CharSequence) {
+        sendEvent(JiangUiEvent.ShowLoadingDialog(message))
+    }
+
+    protected fun dismissLoadingDialog() {
+        sendEvent(JiangUiEvent.DismissLoadingDialog)
+    }
+
     protected fun launch(
         showLoading: Boolean = true,
+        loadingMode: JiangLoadingMode = if (showLoading) {
+            JiangLoadingMode.PAGE
+        } else {
+            JiangLoadingMode.NONE
+        },
+        loadingMessage: CharSequence? = null,
         block: suspend () -> Unit,
     ) {
         viewModelScope.launch {
-            if (showLoading) {
-                setLoading()
-            }
+            setLoading(loadingMode, loadingMessage)
             try {
                 block()
             } catch (throwable: Throwable) {
@@ -79,13 +110,17 @@ open class JiangViewModel : ViewModel() {
 
     protected fun <T> launchResult(
         showLoading: Boolean = true,
+        loadingMode: JiangLoadingMode = if (showLoading) {
+            JiangLoadingMode.PAGE
+        } else {
+            JiangLoadingMode.NONE
+        },
+        loadingMessage: CharSequence? = null,
         block: suspend () -> JiangResult<T>,
         onSuccess: (T) -> Unit = {},
     ) {
         viewModelScope.launch {
-            if (showLoading) {
-                setLoading()
-            }
+            setLoading(loadingMode, loadingMessage)
             try {
                 handleResult(block(), onSuccess)
             } catch (throwable: Throwable) {

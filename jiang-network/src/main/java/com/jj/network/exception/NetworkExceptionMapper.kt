@@ -11,7 +11,16 @@ import java.net.UnknownHostException
 
 object NetworkExceptionMapper {
 
-    fun map(throwable: Throwable): JiangResult.Error {
+    private var configuredUnauthorizedHandler: ((JiangException) -> Unit)? = null
+
+    fun setUnauthorizedHandler(handler: ((JiangException) -> Unit)?) {
+        configuredUnauthorizedHandler = handler
+    }
+
+    fun map(
+        throwable: Throwable,
+        unauthorizedHandler: ((JiangException) -> Unit)? = null,
+    ): JiangResult.Error {
         val exception = when (throwable) {
             is SocketTimeoutException -> JiangException(
                 code = JiangErrorCode.TIMEOUT,
@@ -20,7 +29,7 @@ object NetworkExceptionMapper {
             )
 
             is UnknownHostException -> JiangException(
-                code = JiangErrorCode.NOT_FOUND,
+                code = JiangErrorCode.NETWORK_UNAVAILABLE,
                 message = "Network host is unavailable.",
                 throwable = throwable,
             )
@@ -48,6 +57,9 @@ object NetworkExceptionMapper {
                 message = throwable.message ?: "Unknown network error.",
                 throwable = throwable,
             )
+        }
+        if (exception.code == JiangErrorCode.UNAUTHORIZED) {
+            (unauthorizedHandler ?: configuredUnauthorizedHandler)?.invoke(exception)
         }
         return JiangResult.Error(exception)
     }

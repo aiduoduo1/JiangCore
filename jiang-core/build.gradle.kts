@@ -35,4 +35,6 @@ android {
 dependencies {
 
     implementation(project(":jiang-common"))
+
+    testImplementation(libs.junit)
 }

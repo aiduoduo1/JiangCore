@@ -1,101 +1,78 @@
-# jiang-storage/README.md
+# JiangCore Codex Notes
 
-# jiang-storage
+## Project Goal
 
-## 模块定位
+JiangCore is a self-owned Android multi-module framework for future new projects. It is not a migration tool for old projects.
 
-`jiang-storage` 是 JiangCore 的本地存储模块，包名为：
+The old projects are useful only as experience references: they show real patterns that future projects will also need, such as login, token headers, scan-code workflows, multiple request orchestration, dialogs, file download, APK update guidance, printing, and long connections.
 
-```text
-com.jj.storage
-```
+JiangCore should absorb those proven patterns into clean framework capabilities, without copying old third-party framework code or old business code.
 
-该模块负责封装 Key-Value 存储、缓存管理、本地数据读写和存储实现隔离。
+## Project Positioning
 
-业务层不应该直接依赖 MMKV、SharedPreferences 或 DataStore，而应该通过 JiangCore 提供的统一存储接口进行访问。
+JiangCore provides common runtime, architecture, UI, network, storage, and sample capabilities for new internal Android projects.
 
-## 核心职责
+## Modules
 
-* 提供统一 Key-Value 存储接口
-* 封装 MMKV / DataStore / SharedPreferences 等存储实现
-* 提供缓存管理能力
-* 提供本地数据清理能力
-* 提供 Token、用户配置等轻量数据存储能力
-* 隔离业务层和具体存储框架
+- `app`: sample and verification module. Keep the module name as `app`.
+- `jiang-common`: common result, exception, error code, and logging primitives.
+- `jiang-core`: framework initialization, global config, Android system capabilities, and APK install guidance.
+- `jiang-arch`: Activity, Fragment, ViewModel, coroutine, and UI state architecture helpers.
+- `jiang-network`: Retrofit, OkHttp, Gson, request headers, exception mapping, API calling, file download, and APK download.
+- `jiang-storage`: local key-value storage abstraction.
+- `jiang-ui`: toolbar, state layout, toast, loading dialog, confirm dialog, and view helpers.
 
-## 不负责什么
+## Naming And Boundaries
 
-* 不处理复杂数据库关系
-* 不处理业务数据模型
-* 不处理网络缓存策略
-* 不处理账号体系逻辑
-* 不直接绑定某个具体业务场景
+- Package names stay under `com.jj.xxx`.
+- Do not introduce `com.jiang.xxx`.
+- Use ViewBinding. Do not use DataBinding.
+- Retrofit, OkHttp, and Gson belong in `jiang-network`.
+- MMKV and DataStore belong in `jiang-storage`.
+- appcompat and material belong in `jiang-ui` or `app`.
+- The `app` module is for demos and verification only.
+- Business APIs, DTOs, update rules, dialogs, and page workflows belong in app code, not in framework modules.
+- Old project code is reference material only. Do not migrate or copy old framework structure into JiangCore.
 
-## 主要包结构
+## Current Code Status
 
-```text
-com.jj.storage
-├── kv            Key-Value 存储
-├── cache         缓存管理
-└── ext           存储扩展函数
-```
+The codebase has moved beyond the original `v0.1.0` documentation. Current implementation is best described as `v0.3.0`:
 
-## 对外能力
+- Base framework and module structure are available.
+- UI helpers are available: `JToast`, `JLoadingDialog`, `JConfirmDialog`, `clickNoRepeat`.
+- Dialog helpers now include lifecycle-aware base, input, scan input, single-choice, multi-choice, and list dialogs.
+- Network dynamic headers are available through `JiangNetworkConfig.dynamicHeadersProvider`.
+- Network request logging levels are configurable through `JiangNetworkConfig.logLevel`.
+- Network logging redacts common token/password headers by default.
+- Network calls support a lightweight unauthorized hook and per-request token opt-out.
+- Page ergonomics are available through `JiangLoadingMode`, `JiangErrorMode`, `JiangEvent`, `JiangUiEvent`, and `observeText`.
+- Login API usage and business response conversion are demonstrated in app with `LoginApi`, `LoginRepository`, `LoginRequest`, and `MesBaseResult<T>.toJiangResult()`.
+- File download and APK download are available in `jiang-network.download`.
+- APK install guidance is available in `jiang-core.apk`.
+- Runtime permission helpers are available in `jiang-core.permission`.
+- Permission business-flow scene/result models are available in `jiang-core.permission`.
+- Vibration helper is available in `jiang-core.system.JiangVibrator`.
+- Demo pages exist for toolbar, state layout, network, storage, UI, APK update, permissions, permission flow, and scan-code workflow.
+- Scan-code business page demo exists for sequential requests, focus jump, select-all-on-error, and dialog loading lifecycle.
 
-* `JiangStorage`：存储模块入口
-* `KvStorage`：Key-Value 存储接口
-* `MMKVStorage`：MMKV 实现
-* `DataStoreStorage`：DataStore 实现
-* `SpStorage`：SharedPreferences 实现
-* `CacheManager`：缓存管理器
+## Current Pain Point
 
-## 使用示例
+The framework can now support common business pages, multiple network requests, loading states, dialog loading, one-time UI events, and scan-code style sequential workflows.
 
-保存数据：
+For the network layer, the next goal is not to build every advanced feature at once. The practical goal is to make new-project API development easy to write, easy to debug, and easy to extend.
 
-```kotlin
-JiangStorage.kv.putString("token", token)
-```
+## Recommended Next Step
 
-读取数据：
+Network follow-up priorities:
 
-```kotlin
-val token = JiangStorage.kv.getString("token")
-```
+1. Keep adding small app-owned examples for common business response patterns.
+2. Add advanced capabilities such as upload, multi-base-url, and request de-duplication only when a real new project needs them.
+3. Keep login-expired navigation, update rules, and page-specific request orchestration in app/business code.
 
-删除数据：
+## Development Rules
 
-```kotlin
-JiangStorage.kv.remove("token")
-```
-
-清空数据：
-
-```kotlin
-JiangStorage.kv.clear()
-```
-
-## 依赖关系
-
-```kotlin
-implementation(project(":jiang-common"))
-implementation(project(":jiang-core"))
-```
-
-## 设计原则
-
-`jiang-storage` 的核心价值是隔离具体存储实现。
-
-业务项目不应该直接写：
-
-```kotlin
-MMKV.defaultMMKV().encode("token", token)
-```
-
-而应该通过统一入口访问：
-
-```kotlin
-JiangStorage.kv.putString("token", token)
-```
-
-这样后续即使从 MMKV 切换到 DataStore，也不会影响业务层代码。
+- Do not upgrade Gradle, AGP, Kotlin, SDK, or dependency versions unless explicitly requested.
+- Do not rename modules or packages.
+- Keep changes scoped to the requested goal.
+- Do not revert unrelated local changes.
+- Run `assembleDebug` after framework or sample changes.

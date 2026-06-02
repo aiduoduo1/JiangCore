@@ -1,321 +1,188 @@
-# jiang-network/README.md
-
 # jiang-network
 
-## 模块定位
+## Module Role
 
-`jiang-network` 是 JiangCore 的网络请求模块，包名为：
+`jiang-network` provides Retrofit, OkHttp, Gson, header handling, safe API calls, network exception mapping, and file download capabilities.
+
+The goal is to support new-project API development with a small, maintainable network foundation. It should not copy old third-party network framework structure.
+
+Package:
 
 ```text
 com.jj.network
 ```
 
-该模块负责封装 Retrofit、OkHttp、统一请求头、Token、网络异常、接口响应适配、请求日志和安全请求调用能力。
+## Current Capabilities
 
-## 核心职责
+- `JiangNetwork`: initialization and API creation entry.
+- `JiangNetworkConfig`: base URL, timeout, static headers, dynamic headers, debug config, logging level, sensitive headers, and unauthorized hook.
+- `OkHttpFactory`.
+- `HeaderInterceptor`.
+- `RetrofitFactory`.
+- `JiangApiCaller.safeApiCall`.
+- `NetworkExceptionMapper`.
+- `JiangApiException`.
+- File download package `com.jj.network.download`:
+  - `JiangDownloadConfig`.
+  - `JiangDownloadApi`.
+  - `JiangFileDownloader`.
+  - `JiangDownloadResult`.
+  - `JiangDownloadProgress`.
+  - `JiangApkDownloader`.
 
-* 初始化网络请求能力
-* 创建 Retrofit Service
-* 管理统一 BaseUrl
-* 管理统一请求头
-* 管理 Token 注入
-* 统一处理网络异常
-* 统一处理接口响应结构
-* 提供安全请求封装
-* 提供网络请求日志能力
+## Dynamic Headers
 
-## 不负责什么
-
-* 不处理页面 Loading
-* 不处理 Activity / Fragment
-* 不处理具体业务页面
-* 不强绑定某一种后端返回结构
-* 不直接处理页面跳转
-* 不直接处理业务登录逻辑
-
-## 主要包结构
-
-```text
-com.jj.network
-├── config        网络配置
-├── contract      扩展接口
-├── model         网络模型
-├── exception     网络异常
-├── interceptor   OkHttp 拦截器
-├── retrofit      Retrofit 创建
-└── ext           网络扩展函数
-```
-
-## 对外能力
-
-* `JiangHttp`：网络模块初始化入口
-* `HttpConfig`：网络配置
-* `RetrofitFactory`：Retrofit 创建工厂
-* `ServiceCreator`：接口 Service 创建器
-* `TokenProvider`：Token 提供器
-* `HeaderProvider`：全局请求头提供器
-* `LoginExpiredHandler`：登录过期处理器
-* `ResponseAdapter`：接口响应适配器
-* `NetworkExceptionHandler`：网络异常处理器
-* `HeaderInterceptor`：请求头拦截器
-* `TokenInterceptor`：Token 拦截器
-* `LoggingInterceptor`：日志拦截器
-
-## 使用示例
+Use `dynamicHeadersProvider` when headers must be read fresh for every request, such as login token headers:
 
 ```kotlin
-JiangHttp.init(
-    config = HttpConfig(
-        baseUrl = "https://api.example.com/",
-        tokenProvider = object : TokenProvider {
-            override fun getToken(): String? {
-                return "token"
-            }
-        },
-        headerProvider = object : HeaderProvider {
-            override fun getHeaders(): Map<String, String> {
-                return mapOf(
-                    "platform" to "android"
-                )
-            }
+JiangNetwork.init(
+    JiangNetworkConfig(
+        baseUrl = "https://example.com/",
+        dynamicHeadersProvider = {
+            mapOf(
+                "MES-UP-TOKEN" to tokenProvider().orEmpty(),
+                "User-Agent" to "Android"
+            )
         }
     )
 )
 ```
 
-创建接口：
+Static `headers` and `dynamicHeadersProvider()` are merged in `HeaderInterceptor`. Dynamic headers win when the same name appears in both maps.
+
+File downloads also read `MES-UP-TOKEN` from the same merged header source, so token refresh behavior stays consistent between normal requests and download requests.
+
+If one API should not carry token, add the internal request header:
 
 ```kotlin
-interface UserApi {
+@Headers("No-Token: true")
+@POST("/ca/auth/login")
+suspend fun login(@Body request: LoginRequest): MesBaseResult<String>
+```
 
-    @GET("user/info")
-    suspend fun getUserInfo(): ApiResponse<UserInfo>
+`HeaderInterceptor` removes `No-Token` before the request is sent.
+
+## Logging
+
+Use `JiangNetworkConfig.logLevel` to control OkHttp request logging:
+
+```kotlin
+JiangNetworkConfig(
+    baseUrl = "https://example.com/",
+    logLevel = JiangNetworkLogLevel.BASIC
+)
+```
+
+Available levels are `NONE`, `BASIC`, `HEADERS`, and `BODY`.
+
+Sensitive headers are redacted by default:
+
+```text
+MES-UP-TOKEN
+Authorization
+password
+pwd
+```
+
+Override `sensitiveHeaders` in `JiangNetworkConfig` if a project needs a different list.
+
+## Unauthorized Hook
+
+Use `unauthorizedHandler` to observe HTTP `401` centrally:
+
+```kotlin
+JiangNetworkConfig(
+    baseUrl = "https://example.com/",
+    unauthorizedHandler = { exception ->
+        // Clear token or notify app navigation layer.
+    }
+)
+```
+
+The framework only reports the event. Clearing login state and jumping pages stay in app/business code.
+
+## Business APIs
+
+Business Retrofit interfaces belong in app/business modules:
+
+```kotlin
+interface LoginApi {
+    @POST("/ca/auth/login")
+    suspend fun login(@Body request: LoginRequest): MesBaseResult<String>
 }
 ```
 
-创建 Service：
+Create them through:
 
 ```kotlin
-val userApi = ServiceCreator.create(UserApi::class.java)
+val api = JiangNetwork.createApi(LoginApi::class.java)
 ```
 
-## 依赖关系
+`jiang-network` must not hardcode one backend `BaseResult` structure.
+
+Business response conversion should stay in app/business modules. The app sample provides an extension example:
 
 ```kotlin
-implementation(project(":jiang-common"))
-implementation(project(":jiang-core"))
+fun <T> MesBaseResult<T>.toJiangResult(): JiangResult<T>
 ```
 
-## 设计原则
+This keeps the framework independent from any single backend response format.
 
-`jiang-network` 必须保持可扩展。
+## File Download
 
-不同项目的后端返回结构可能不同，所以网络模块不能把某一种 `BaseResult` 写死在框架里。
+`JiangFileDownloader` supports:
 
-框架应该通过 `ResponseAdapter`、`TokenProvider`、`HeaderProvider`、`LoginExpiredHandler` 等接口给业务项目留扩展点。
+- Downloading normal files.
+- Saving to a specified `File`.
+- Progress callback.
+- Parent directory creation.
+- Writing to `.tmp` first.
+- Renaming to the final file after success.
+- Deleting `.tmp` after failure.
+- Mapping failures to `JiangApiException`.
+- Rethrowing coroutine cancellation instead of converting it to a network error.
 
----
+`JiangApkDownloader` validates that the target file uses an `.apk` suffix.
 
-# jiang-ui/README.md
+Not implemented:
 
-# jiang-ui
+- Breakpoint resume.
+- Multi-task download queue.
+- Background notification download.
+- APK installation.
 
-## 模块定位
+## Boundaries
 
-`jiang-ui` 是 JiangCore 的通用 UI 模块，包名为：
+`jiang-network` does not handle:
 
-```text
-com.jj.ui
-```
+- Activity or Fragment.
+- Page loading or dialogs.
+- Business login flow.
+- Version checking rules.
+- APK installation.
 
-该模块负责封装 Android 项目中常用的通用 UI 能力，例如 Loading、Toast、Dialog、页面状态布局、空页面、错误页面、View 扩展和通用 Adapter。
+## Roadmap
 
-## 核心职责
+Recommended next:
 
-* 提供统一 Loading 能力
-* 提供统一 Toast 能力
-* 提供统一 Dialog 能力
-* 提供页面状态布局
-* 提供空页面展示
-* 提供错误页面展示
-* 提供 View 扩展函数
-* 提供防重复点击能力
-* 提供 RecyclerView 通用能力
+- Add app-level repository helpers if repeated business response conversion grows.
 
-## 不负责什么
+Later, only when real new projects need them:
 
-* 不编写业务页面
-* 不处理网络请求
-* 不处理业务状态
-* 不直接依赖业务模块
-* 不强绑定某个具体项目的 UI 风格
+- Multi-base-url support.
+- File upload.
+- Request de-duplication or keyed cancellation.
+- Cache strategy.
+- SSE or WebSocket helpers.
 
-## 主要包结构
-
-```text
-com.jj.ui
-├── loading       Loading 组件
-├── toast         Toast 组件
-├── dialog        Dialog 组件
-├── state         页面状态布局
-├── adapter       通用 Adapter
-└── ext           View 扩展函数
-```
-
-## 对外能力
-
-* `JiangLoading`：统一 Loading
-* `LoadingDialog`：Loading 弹窗
-* `JiangToast`：统一 Toast
-* `ConfirmDialog`：确认弹窗
-* `MessageDialog`：消息弹窗
-* `StateLayout`：页面状态布局
-* `EmptyView`：空页面
-* `ErrorView`：错误页面
-* `ViewExt`：View 扩展函数
-* `JiangAdapter`：通用列表 Adapter
-
-## 使用示例
-
-```kotlin
-JiangToast.show("保存成功")
-```
-
-```kotlin
-JiangLoading.show(context)
-JiangLoading.dismiss()
-```
-
-```kotlin
-stateLayout.showLoading()
-stateLayout.showContent()
-stateLayout.showEmpty("暂无数据")
-stateLayout.showError("加载失败")
-```
-
-防重复点击：
-
-```kotlin
-button.setSingleClickListener {
-    // 执行点击事件
-}
-```
-
-## 依赖关系
+## Dependencies
 
 ```kotlin
 implementation(project(":jiang-common"))
 implementation(project(":jiang-core"))
+api(libs.retrofit.core)
+implementation(libs.retrofit.converter.gson)
+implementation(libs.okhttp.core)
+implementation(libs.okhttp.logging)
+implementation(libs.gson)
 ```
-
-## 设计原则
-
-`jiang-ui` 只提供通用 UI 能力，不写业务 UI。
-
-所有 UI 能力都应该低侵入、可替换、可扩展。
-
-业务项目可以直接使用默认组件，也可以替换 Loading、Toast、Dialog 的具体实现。
-
----
-
-# jiang-storage/README.md
-
-# jiang-storage
-
-## 模块定位
-
-`jiang-storage` 是 JiangCore 的本地存储模块，包名为：
-
-```text
-com.jj.storage
-```
-
-该模块负责封装 Key-Value 存储、缓存管理、本地数据读写和存储实现隔离。
-
-业务层不应该直接依赖 MMKV、SharedPreferences 或 DataStore，而应该通过 JiangCore 提供的统一存储接口进行访问。
-
-## 核心职责
-
-* 提供统一 Key-Value 存储接口
-* 封装 MMKV / DataStore / SharedPreferences 等存储实现
-* 提供缓存管理能力
-* 提供本地数据清理能力
-* 提供 Token、用户配置等轻量数据存储能力
-* 隔离业务层和具体存储框架
-
-## 不负责什么
-
-* 不处理复杂数据库关系
-* 不处理业务数据模型
-* 不处理网络缓存策略
-* 不处理账号体系逻辑
-* 不直接绑定某个具体业务场景
-
-## 主要包结构
-
-```text
-com.jj.storage
-├── kv            Key-Value 存储
-├── cache         缓存管理
-└── ext           存储扩展函数
-```
-
-## 对外能力
-
-* `JiangStorage`：存储模块入口
-* `KvStorage`：Key-Value 存储接口
-* `MMKVStorage`：MMKV 实现
-* `DataStoreStorage`：DataStore 实现
-* `SpStorage`：SharedPreferences 实现
-* `CacheManager`：缓存管理器
-
-## 使用示例
-
-保存数据：
-
-```kotlin
-JiangStorage.kv.putString("token", token)
-```
-
-读取数据：
-
-```kotlin
-val token = JiangStorage.kv.getString("token")
-```
-
-删除数据：
-
-```kotlin
-JiangStorage.kv.remove("token")
-```
-
-清空数据：
-
-```kotlin
-JiangStorage.kv.clear()
-```
-
-## 依赖关系
-
-```kotlin
-implementation(project(":jiang-common"))
-implementation(project(":jiang-core"))
-```
-
-## 设计原则
-
-`jiang-storage` 的核心价值是隔离具体存储实现。
-
-业务项目不应该直接写：
-
-```kotlin
-MMKV.defaultMMKV().encode("token", token)
-```
-
-而应该通过统一入口访问：
-
-```kotlin
-JiangStorage.kv.putString("token", token)
-```
-
-这样后续即使从 MMKV 切换到 DataStore，也不会影响业务层代码。
